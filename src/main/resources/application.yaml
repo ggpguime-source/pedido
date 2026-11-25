@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: pedido
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/pedidos
+    username: pedido
+    password: ${DB_PASSWORD:pedido123}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
