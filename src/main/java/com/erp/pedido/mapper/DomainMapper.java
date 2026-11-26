@@ -29,7 +29,7 @@ public class DomainMapper {
      * @param request
      * @return
      */
-    public Cliente toDomain(ClienteRequest request) {
+    public Cliente toClienteDomain(ClienteRequest request) {
         return Cliente.builder()
                 .id(request.getId())
                 .build();
@@ -39,7 +39,7 @@ public class DomainMapper {
      * @param request
      * @return
      */
-    public Produto toDomain(ProdutoRequest request){
+    public Produto toProdutoDomain(ProdutoRequest request){
         return Produto.builder()
                 .id(request.getId())
                 .build();
@@ -49,9 +49,9 @@ public class DomainMapper {
      * @param request
      * @return
      */
-    public ItemPedido toDomain(ItemPedidoRequest request){
+    public ItemPedido toItemPedidoDomain(ItemPedidoRequest request){
         return ItemPedido.builder()
-                .produto(toDomain(request.getProduto()))
+                .produto(toProdutoDomain(request.getProduto()))
                 .quantidade(request.getQuantidade())
                 .build();
     }
@@ -60,10 +60,10 @@ public class DomainMapper {
      * @param requests
      * @return
      */
-    public List<ItemPedido> toDomain(List<ItemPedidoRequest> requests){
+    public List<ItemPedido> toListItemPedidoDomain(List<ItemPedidoRequest> requests){
         var listItemPedido = new ArrayList<ItemPedido>();
         for (ItemPedidoRequest item : requests) {
-            listItemPedido.add(toDomain(item));
+            listItemPedido.add(toItemPedidoDomain(item));
         }
         return listItemPedido;
     }
@@ -72,10 +72,10 @@ public class DomainMapper {
      * @param request
      * @return
      */
-    public Pedido toDomain(PedidoRequest request){
+    public Pedido toPedidoDomain(PedidoRequest request){
         return Pedido.builder()
-                .cliente(toDomain(request.getCliente()))
-                .itens(toDomain(request.getItens()))
+                .cliente(toClienteDomain(request.getCliente()))
+                .itens(toListItemPedidoDomain(request.getItens()))
                 .build();
     }
     /**
@@ -83,7 +83,7 @@ public class DomainMapper {
      * @param cliente
      * @return
      */
-    public ClienteResponse toResponse(Cliente cliente){
+    public ClienteResponse toClienteResponse(Cliente cliente){
         var response = new ClienteResponse();
         response.setId(cliente.getId());
         response.setNome(cliente.getNome());
@@ -94,7 +94,7 @@ public class DomainMapper {
      * @param produto
      * @return
      */
-    public ProdutoResponse toResponse(Produto produto){
+    public ProdutoResponse toProdutoResponse(Produto produto){
         var response = new ProdutoResponse();
         response.setId(produto.getId());
         response.setNome(produto.getNome());
@@ -106,9 +106,9 @@ public class DomainMapper {
      * @param item
      * @return
      */
-    public ItemPedidoResponse toResponse(ItemPedido item){
+    public ItemPedidoResponse toItemResponse(ItemPedido item){
         var response = new ItemPedidoResponse();
-        response.setProduto(toResponse(item.getProduto()));
+        response.setProduto(toProdutoResponse(item.getProduto()));
         response.setQuantidade(item.getQuantidade());
         response.setDesconto(item.getDesconto());
         response.setDescontoPercentual(item.getDescontoPercentual());
@@ -121,10 +121,10 @@ public class DomainMapper {
      * @param itemList
      * @return
      */
-    public List<ItemPedidoResponse> toResponse(List<ItemPedido> itemList){
+    public List<ItemPedidoResponse> toListItemPedidoResponse(List<ItemPedido> itemList){
         var response = new ArrayList<ItemPedidoResponse>();
         for (ItemPedido item : itemList) {
-            response.add(toResponse(item));
+            response.add(toItemResponse(item));
         }
         return response;
     }
@@ -133,11 +133,11 @@ public class DomainMapper {
      * @param pedido
      * @return
      */
-    public PedidoResponse toResponse(Pedido pedido){
+    public PedidoResponse toPedidoResponse(Pedido pedido){
         var response = new PedidoResponse();
         response.setId(pedido.getId());
-        response.setItens(toResponse(pedido.getItens()));
-        response.setCliente(toResponse(pedido.getCliente()));
+        response.setItens(toListItemPedidoResponse(pedido.getItens()));
+        response.setCliente(toClienteResponse(pedido.getCliente()));
         response.setDataCriacao(pedido.getDataCriacao());
         response.setDescontoTotal(pedido.getDescontoTotal());
         response.setStatus(pedido.getStatus());
@@ -150,10 +150,10 @@ public class DomainMapper {
      * @param pedido
      * @return
      */
-    public PedidoResumoResponse toResumoResponse(Pedido pedido){
+    public PedidoResumoResponse toPedidoResumoResponse(Pedido pedido){
         var response = new PedidoResumoResponse();
         response.setId(pedido.getId());
-        response.setCliente(toResponse(pedido.getCliente()));
+        response.setCliente(toClienteResponse(pedido.getCliente()));
         response.setDataCriacao(pedido.getDataCriacao());
         response.setStatus(pedido.getStatus());
         response.setValorTotal(pedido.getValorTotal());

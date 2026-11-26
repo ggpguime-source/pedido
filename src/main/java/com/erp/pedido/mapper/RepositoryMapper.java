@@ -26,7 +26,7 @@ public class RepositoryMapper {
      * @param entity
      * @return
      */
-    public Cliente toDomain(ClienteEntity entity){
+    public Cliente toClienteDomain(ClienteEntity entity){
         return Cliente.builder()
                 .id(entity.getId())
                 .nome(entity.getNome())
@@ -38,7 +38,7 @@ public class RepositoryMapper {
      * @param entity
      * @return
      */
-    public Produto toDomain(ProdutoEntity entity){
+    public Produto toProdutoDomain(ProdutoEntity entity){
         return Produto.builder()
                 .id(entity.getId())
                 .nome(entity.getNome())
@@ -53,10 +53,10 @@ public class RepositoryMapper {
      * @param entity
      * @return
      */
-    public ItemPedido toDomain(ItemPedidoEntity entity){
+    public ItemPedido toItemPedidoDomain(ItemPedidoEntity entity){
         return ItemPedido.builder()
                 .id(entity.getId())
-                .produto(toDomain(entity.getProduto()))
+                .produto(toProdutoDomain(entity.getProduto()))
                 .quantidade(entity.getQuantidade())
                 .precoUnitario(entity.getPrecoUnitario())
                 .descontoPercentual(entity.getDescontoPercentual())
@@ -70,11 +70,11 @@ public class RepositoryMapper {
      * @param entities
      * @return
      */
-    public List<ItemPedido> toDomain(List<ItemPedidoEntity> entities){
+    public List<ItemPedido> toListItemPedidoDomain(List<ItemPedidoEntity> entities){
         var listItemPedido = new ArrayList<ItemPedido>();
 
         for (ItemPedidoEntity item : entities) {
-            listItemPedido.add(toDomain(item));
+            listItemPedido.add(toItemPedidoDomain(item));
         }
 
         return listItemPedido;
@@ -85,11 +85,11 @@ public class RepositoryMapper {
      * @param entity
      * @return
      */
-    public Pedido toDomain(PedidoEntity entity){
+    public Pedido toPedidoDomain(PedidoEntity entity){
         return Pedido.builder()
                 .id(entity.getId())
-                .cliente(toDomain(entity.getCliente()))
-                .itens(toDomain(entity.getItens()))
+                .cliente(toClienteDomain(entity.getCliente()))
+                .itens(toListItemPedidoDomain(entity.getItens()))
                 .subtotal(entity.getSubtotal())
                 .descontoTotal(entity.getDescontoTotal())
                 .valorTotal(entity.getValorTotal())
@@ -106,7 +106,7 @@ public class RepositoryMapper {
     public Pedido toResumoDomain(PedidoEntity entity){
         return Pedido.builder()
                 .id(entity.getId())
-                .cliente(toDomain(entity.getCliente()))
+                .cliente(toClienteDomain(entity.getCliente()))
                 .valorTotal(entity.getValorTotal())
                 .status(entity.getStatus())
                 .dataCriacao(entity.getDataCriacao())
@@ -142,7 +142,7 @@ public class RepositoryMapper {
      * @param produtos
      * @return
      */
-    public PedidoEntity toEntity(
+    public PedidoEntity toPedidoEntity(
             Pedido pedido,
             ClienteEntity cliente,
             Map<Long, ProdutoEntity> produtos){
