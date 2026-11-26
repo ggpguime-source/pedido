@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.erp.pedido.domain.ItemPedido;
 import com.erp.pedido.domain.Pedido;
 import com.erp.pedido.entity.ClienteEntity;
+import com.erp.pedido.entity.PedidoEntity;
 import com.erp.pedido.entity.ProdutoEntity;
 import com.erp.pedido.enums.StatusPedido;
 import com.erp.pedido.mapper.RepositoryMapper;
@@ -20,7 +21,9 @@ import com.erp.pedido.repository.ClienteRepository;
 import com.erp.pedido.repository.PedidoRepository;
 import com.erp.pedido.repository.ProdutoRepository;
 
-import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -45,6 +48,28 @@ public class PedidoService {
         var pedido = mapper.toPedidoEntity( pedidoRequest, cliente, produtos);
 
         return mapper.toPedidoDomain(pedidoRepository.save(pedido));
+    }
+
+    @Transactional(readOnly = true)
+    public Pedido consultarPedido(Long id) {
+
+        var pedidoEntity = pedidoRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado: " + id));
+        var pedidoDomain = mapper.toPedidoDomain(pedidoEntity);
+
+        return pedidoDomain;
+
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Pedido> listarPedidos(Long clienteId, Pageable pageable) {
+        Page<PedidoEntity> pedidos;
+
+        if (clienteId != null) {
+            pedidos = pedidoRepository.findByClienteId(clienteId, pageable);
+        } else {
+            pedidos = pedidoRepository.findAll(pageable);
+        }
+        return pedidos.map(pedido -> mapper.toResumoDomain(pedido));
     }
 
     private ClienteEntity consultarCliente(Long clienteId){

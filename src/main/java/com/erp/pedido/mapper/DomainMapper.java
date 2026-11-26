@@ -3,6 +3,7 @@ package com.erp.pedido.mapper;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import com.erp.pedido.domain.Cliente;
@@ -13,6 +14,7 @@ import com.erp.pedido.dto.ClienteRequest;
 import com.erp.pedido.dto.ClienteResponse;
 import com.erp.pedido.dto.ItemPedidoRequest;
 import com.erp.pedido.dto.ItemPedidoResponse;
+import com.erp.pedido.dto.PageResponse;
 import com.erp.pedido.dto.PedidoRequest;
 import com.erp.pedido.dto.PedidoResponse;
 import com.erp.pedido.dto.PedidoResumoResponse;
@@ -157,6 +159,19 @@ public class DomainMapper {
         response.setDataCriacao(pedido.getDataCriacao());
         response.setStatus(pedido.getStatus());
         response.setValorTotal(pedido.getValorTotal());
+        return response;
+    }
+
+    public <T> PageResponse<T> toPageResponse(Page<T> page){
+
+        var response = new PageResponse<T>();
+
+        response.setContent(page.getContent());
+        response.setPage(page.getNumber());
+        response.setSize(page.getSize());
+        response.setTotalElements(page.getTotalElements());
+        response.setTotalPages(page.getTotalPages());
+
         return response;
     }
 
