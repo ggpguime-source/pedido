@@ -16,10 +16,13 @@ import com.erp.pedido.entity.ClienteEntity;
 import com.erp.pedido.entity.PedidoEntity;
 import com.erp.pedido.entity.ProdutoEntity;
 import com.erp.pedido.enums.StatusPedido;
+import com.erp.pedido.enums.StatusRequest;
 import com.erp.pedido.mapper.RepositoryMapper;
 import com.erp.pedido.repository.ClienteRepository;
 import com.erp.pedido.repository.PedidoRepository;
 import com.erp.pedido.repository.ProdutoRepository;
+import com.erp.pedido.repository.RequestRepository;
+import com.erp.pedido.util.RequestHashUtil;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,10 +36,20 @@ public class PedidoService {
     private final PedidoRepository pedidoRepository;
     private final ClienteRepository clienteRepository;
     private final ProdutoRepository produtoRepository;
+    private final RequestRepository requestRepository;
     private final RepositoryMapper mapper;
 
     @Transactional 
     public Pedido criarPedido(Pedido pedidoRequest, String requestId){
+
+        var requestHash = RequestHashUtil.gerarHash(pedidoRequest);
+
+        var requestRegistrada = requestRepository.registrarRequest(requestId, requestHash);
+
+        if (requestRegistrada == 0) {
+            return consultarRequestExistente(requestId, requestHash);
+        }
+
         var cliente = consultarCliente(pedidoRequest.getCliente().getId());
         var produtos = consultarProdutos(pedidoRequest.getItens());
 
@@ -47,7 +60,11 @@ public class PedidoService {
 
         var pedido = mapper.toPedidoEntity( pedidoRequest, cliente, produtos);
 
-        return mapper.toPedidoDomain(pedidoRepository.save(pedido));
+        var pedidoSalvo = pedidoRepository.save(pedido);
+
+        concluirRequest(requestId, pedidoSalvo);
+
+        return mapper.toPedidoDomain(pedidoSalvo);
     }
 
     @Transactional(readOnly = true)
@@ -70,6 +87,20 @@ public class PedidoService {
             pedidos = pedidoRepository.findAll(pageable);
         }
         return pedidos.map(pedido -> mapper.toResumoDomain(pedido));
+    }
+
+    private Pedido consultarRequestExistente(String requestId, String requestHash){
+        var requestEntity = requestRepository.findById(requestId).orElseThrow(() -> new IllegalStateException("Request não encontrada: " + requestId));
+        if (!requestEntity.getRequestHash().equals(requestHash)) {
+            throw new IllegalArgumentException("RequestID já utilizado com conteúdo diferente");
+        }
+        return mapper.toPedidoDomain(requestEntity.getPedido());
+    }
+
+    private void concluirRequest(String requestId, PedidoEntity pedido) {
+        var requestEntity = requestRepository.findById(requestId).orElseThrow(() -> new IllegalStateException("Request não encontrada: " + requestId));
+        requestEntity.setPedido(pedido);
+        requestEntity.setStatus(StatusRequest.CONCLUIDO);
     }
 
     private ClienteEntity consultarCliente(Long clienteId){
