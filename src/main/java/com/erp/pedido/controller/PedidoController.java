@@ -14,6 +14,7 @@ import com.erp.pedido.dto.PageResponse;
 import com.erp.pedido.dto.PedidoRequest;
 import com.erp.pedido.dto.PedidoResponse;
 import com.erp.pedido.dto.PedidoResumoResponse;
+import com.erp.pedido.dto.StatusPedidoRequest;
 import com.erp.pedido.mapper.DomainMapper;
 import com.erp.pedido.service.PedidoService;
 
@@ -22,6 +23,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -62,6 +64,12 @@ public class PedidoController {
         var pedidosResponse = pedidosDomain.map(pedido -> mapper.toPedidoResumoResponse(pedido));
         var pageResponse = mapper.toPageResponse(pedidosResponse);
         return ResponseEntity.ok(pageResponse);
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Void> alterarStatus(@PathVariable Long id,@Valid @RequestBody StatusPedidoRequest status){
+        pedidoService.alterarStatus(id, status.getStatus());
+        return ResponseEntity.noContent().build();
     }
 
 }

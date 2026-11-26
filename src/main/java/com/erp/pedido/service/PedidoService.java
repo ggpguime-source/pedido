@@ -17,6 +17,9 @@ import com.erp.pedido.entity.PedidoEntity;
 import com.erp.pedido.entity.ProdutoEntity;
 import com.erp.pedido.enums.StatusPedido;
 import com.erp.pedido.enums.StatusRequest;
+import com.erp.pedido.exception.BusinessException;
+import com.erp.pedido.exception.ConflictException;
+import com.erp.pedido.exception.NotFoundException;
 import com.erp.pedido.mapper.RepositoryMapper;
 import com.erp.pedido.repository.ClienteRepository;
 import com.erp.pedido.repository.PedidoRepository;
@@ -70,7 +73,7 @@ public class PedidoService {
     @Transactional(readOnly = true)
     public Pedido consultarPedido(Long id) {
 
-        var pedidoEntity = pedidoRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado: " + id));
+        var pedidoEntity = pedidoRepository.findById(id).orElseThrow(() -> new NotFoundException("Pedido não encontrado: " + id));
         var pedidoDomain = mapper.toPedidoDomain(pedidoEntity);
 
         return pedidoDomain;
@@ -89,10 +92,17 @@ public class PedidoService {
         return pedidos.map(pedido -> mapper.toResumoDomain(pedido));
     }
 
+    @Transactional
+    public void alterarStatus(Long id, StatusPedido novoStatus){
+        var pedidoEntity = pedidoRepository.findByIdForUpdate(id).orElseThrow(() -> new NotFoundException("Pedido não encontrado: " + id));
+        validarTransicaoStatus(pedidoEntity.getStatus(),novoStatus);
+        pedidoEntity.setStatus(novoStatus);
+    }
+
     private Pedido consultarRequestExistente(String requestId, String requestHash){
         var requestEntity = requestRepository.findById(requestId).orElseThrow(() -> new IllegalStateException("Request não encontrada: " + requestId));
         if (!requestEntity.getRequestHash().equals(requestHash)) {
-            throw new IllegalArgumentException("RequestID já utilizado com conteúdo diferente");
+            throw new ConflictException("RequestID já utilizado com conteúdo diferente");
         }
         return mapper.toPedidoDomain(requestEntity.getPedido());
     }
@@ -105,7 +115,17 @@ public class PedidoService {
 
     private ClienteEntity consultarCliente(Long clienteId){
         return clienteRepository.findById(clienteId)
-            .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + clienteId));
+            .orElseThrow(() -> new BusinessException("Cliente não encontrado: " + clienteId));
+    }
+
+    private void validarTransicaoStatus(StatusPedido statusAtual, StatusPedido novoStatus) {
+        if (statusAtual == StatusPedido.CRIADO && (novoStatus != StatusPedido.PROCESSANDO && novoStatus != StatusPedido.CANCELADO)) {
+            throw new ConflictException("O status " + statusAtual + " não pode ser atualizado para " + novoStatus);
+        } else if (statusAtual == StatusPedido.PROCESSANDO && (novoStatus != StatusPedido.FATURADO && novoStatus != StatusPedido.CANCELADO)) {
+            throw new ConflictException( "O status " + statusAtual + " não pode ser atualizado para " + novoStatus);
+        } else if (statusAtual == StatusPedido.FATURADO || statusAtual == StatusPedido.CANCELADO) {
+            throw new ConflictException("Status do pedido em estado definitivo = " + statusAtual);
+        }
     }
 
     private Map<Long, ProdutoEntity> consultarProdutos(List<ItemPedido> itens){
@@ -117,7 +137,7 @@ public class PedidoService {
         var produtosEntity = produtoRepository.findAllById(idsProduto);
 
         if (produtosEntity.size() != idsProduto.size()) {
-            throw new IllegalArgumentException("Um ou mais produtos não foram encontrados");
+            throw new BusinessException("Um ou mais produtos não foram encontrados");
         }
 
         Map<Long, ProdutoEntity> produtos = new HashMap<>();
